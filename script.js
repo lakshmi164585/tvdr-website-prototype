@@ -1,6 +1,6 @@
 const menuToggle = document.querySelector('.menu-toggle');
 const navigationMenu = document.querySelector('.navigation-menu');
-const navigationLinks = document.querySelectorAll('.navigation-menu a');
+const navigationLinks = navigationMenu.querySelectorAll('a');
 const contactForm = document.querySelector('#contact-form');
 const formStatus = document.querySelector('#form-status');
 const currentYear = document.querySelector('#current-year');
@@ -11,6 +11,7 @@ function closeMenu() {
     navigationMenu.classList.remove('is-open');
 }
 
+// Keep the narrow-screen menu keyboard-accessible and dismissible.
 menuToggle.addEventListener('click', () => {
     const isExpanded = menuToggle.getAttribute('aria-expanded') === 'true';
     menuToggle.setAttribute('aria-expanded', String(!isExpanded));
@@ -18,9 +19,7 @@ menuToggle.addEventListener('click', () => {
     navigationMenu.classList.toggle('is-open', !isExpanded);
 });
 
-navigationLinks.forEach((link) => {
-    link.addEventListener('click', closeMenu);
-});
+navigationLinks.forEach((link) => link.addEventListener('click', closeMenu));
 
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && menuToggle.getAttribute('aria-expanded') === 'true') {
@@ -30,12 +29,12 @@ document.addEventListener('keydown', (event) => {
 });
 
 window.addEventListener('resize', () => {
-    if (window.innerWidth > 680) {
+    if (window.innerWidth > 1100) {
         closeMenu();
     }
 });
 
-const fieldRules = {
+const fields = {
     name: {
         input: document.querySelector('#name'),
         error: document.querySelector('#name-error'),
@@ -74,7 +73,7 @@ function validateField(field) {
     return !message;
 }
 
-Object.values(fieldRules).forEach((field) => {
+Object.values(fields).forEach((field) => {
     field.input.addEventListener('blur', () => validateField(field));
     field.input.addEventListener('input', () => {
         if (field.input.hasAttribute('aria-invalid')) {
@@ -84,22 +83,40 @@ Object.values(fieldRules).forEach((field) => {
     });
 });
 
+// This prototype validates locally; it does not transmit form data.
 contactForm.addEventListener('submit', (event) => {
     event.preventDefault();
     formStatus.textContent = '';
 
-    const isValid = Object.values(fieldRules).map(validateField).every(Boolean);
+    const isValid = Object.values(fields).map(validateField).every(Boolean);
     if (!isValid) {
         contactForm.querySelector('[aria-invalid="true"]')?.focus();
         return;
     }
 
-    formStatus.textContent = 'Thanks. This sample form does not send messages, but your details have passed validation.';
+    formStatus.textContent = 'Thank you. Your details passed validation; this prototype does not send messages.';
     contactForm.reset();
-    Object.values(fieldRules).forEach((field) => {
+    Object.values(fields).forEach((field) => {
         field.error.textContent = '';
         field.input.removeAttribute('aria-invalid');
     });
 });
+
+// Reveal content as it enters view, while leaving it visible if unsupported.
+if ('IntersectionObserver' in window) {
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.section-heading, .value-item, .service-card, .why-card, .way-item, .timeline-step, .office-card, .contact-form, .contact-details').forEach((item) => {
+        item.classList.add('reveal');
+        revealObserver.observe(item);
+    });
+}
 
 currentYear.textContent = new Date().getFullYear();
